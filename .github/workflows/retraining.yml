@@ -44,12 +44,16 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - name: Build and Push Docker Image (Syarat Advance)
         run: |
           cd MLProject
-          # Membungkus model MLflow menjadi Docker Image
-          mlflow models build-docker -m model_dir -n ${{ secrets.DOCKERHUB_USERNAME }}/telco-model:latest
+          
+          DOCKER_USER=$(echo "${{ secrets.DOCKERHUB_USERNAME }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="$DOCKER_USER/telco-model:latest"
+          
+          echo "Membangun Docker image dengan nama: $IMAGE_NAME"
 
-          # Mengirim image ke Docker Hub
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/telco-model:latest
+          mlflow models build-docker -m model_dir -n $IMAGE_NAME --env-manager virtualenv
+          
+
+          docker push $IMAGE_NAME
