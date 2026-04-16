@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'MLProject/**'
+      - "MLProject/**"
   workflow_dispatch:
 
 jobs:
@@ -18,7 +18,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12.7'
+          python-version: "3.12.7"
 
       - name: Install MLflow & Virtualenv
         run: |
@@ -27,8 +27,11 @@ jobs:
 
       - name: Run MLflow Project (Retraining)
         run: |
+          # Membangunkan/mengaktifkan Conda bawaan Ubuntu Runner
+          source /usr/share/miniconda/etc/profile.d/conda.sh
+
           cd MLProject
-          mlflow run . 
+          mlflow run .
 
       - name: Upload Artifact to GitHub (Syarat Advance)
         uses: actions/upload-artifact@v4
@@ -47,6 +50,6 @@ jobs:
           cd MLProject
           # Membungkus model MLflow menjadi Docker Image
           mlflow models build-docker -m model_dir -n ${{ secrets.DOCKERHUB_USERNAME }}/telco-model:latest
-          
+
           # Mengirim image ke Docker Hub
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/telco-model:latest
