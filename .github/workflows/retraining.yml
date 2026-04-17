@@ -48,15 +48,19 @@ jobs:
         run: |
           cd MLProject
 
+          # 1. Format nama image
           DOCKER_USER=$(echo "${{ secrets.DOCKERHUB_USERNAME }}" | tr '[:upper:]' '[:lower:]')
           IMAGE_NAME="$DOCKER_USER/telco-model:latest"
 
           echo "2. Mengekstrak blueprint Docker dari MLflow..."
           mlflow models generate-dockerfile -m model_dir -d my_docker_build --env-manager virtualenv
 
-          echo "3. Mengalihkan server Ubuntu ke jaringan internal Azure..."
-          sed -i 's/archive.ubuntu.com/azure.archive.ubuntu.com/g' my_docker_build/Dockerfile
-          sed -i 's/security.ubuntu.com/azure.archive.ubuntu.com/g' my_docker_build/Dockerfile
+          echo "3. Menyuntikkan konfigurasi jaringan level-OS ke Dockerfile..."
+          # Mengganti server Ubuntu utama ke server Azure yang lebih stabil
+          sed -i '/apt-get -y update/i RUN sed -i "s/archive.ubuntu.com/azure.archive.ubuntu.com/g" /etc/apt/sources.list' my_docker_build/Dockerfile
+          sed -i '/apt-get -y update/i RUN sed -i "s/security.ubuntu.com/azure.archive.ubuntu.com/g" /etc/apt/sources.list' my_docker_build/Dockerfile
+          # Memaksa Docker menggunakan jaringan IPv4 agar tidak terjadi timeout
+          sed -i '/apt-get -y update/i RUN echo "Acquire::ForceIPv4 \"true\";" > /etc/apt/apt.conf.d/99force-ipv4' my_docker_build/Dockerfile
 
           echo "4. Membangun Docker image: $IMAGE_NAME"
           cd my_docker_build

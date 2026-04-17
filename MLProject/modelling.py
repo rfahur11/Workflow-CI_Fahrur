@@ -6,7 +6,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
 def main():
-    print("Memuat dataset dari folder MLProject ...")
+    print("Memuat dataset dari folder MLProject...")
     df = pd.read_csv("telco_churn_preprocessing/telco_churn_clean.csv")
     X = df.drop('Churn', axis=1)
     y = df['Churn']
