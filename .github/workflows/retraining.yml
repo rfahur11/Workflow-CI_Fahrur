@@ -47,13 +47,20 @@ jobs:
       - name: Build and Push Docker Image (Syarat Advance)
         run: |
           cd MLProject
-          
+
           DOCKER_USER=$(echo "${{ secrets.DOCKERHUB_USERNAME }}" | tr '[:upper:]' '[:lower:]')
           IMAGE_NAME="$DOCKER_USER/telco-model:latest"
-          
-          echo "Membangun Docker image dengan nama: $IMAGE_NAME"
 
-          mlflow models build-docker -m model_dir -n $IMAGE_NAME --env-manager virtualenv
-          
+          echo "2. Mengekstrak blueprint Docker dari MLflow..."
+          mlflow models generate-dockerfile -m model_dir -d my_docker_build --env-manager virtualenv
 
+          echo "3. Mengalihkan server Ubuntu ke jaringan internal Azure..."
+          sed -i 's/archive.ubuntu.com/azure.archive.ubuntu.com/g' my_docker_build/Dockerfile
+          sed -i 's/security.ubuntu.com/azure.archive.ubuntu.com/g' my_docker_build/Dockerfile
+
+          echo "4. Membangun Docker image: $IMAGE_NAME"
+          cd my_docker_build
+          docker build -t $IMAGE_NAME .
+
+          echo "5. Mengirim image ke Docker Hub..."
           docker push $IMAGE_NAME
