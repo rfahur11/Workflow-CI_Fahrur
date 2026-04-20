@@ -3,17 +3,17 @@ import shutil
 import pandas as pd
 import mlflow
 import mlflow.sklearn
-import dagshub
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
 def main():
     # ==========================================
-    # 1. SETUP DAGSHUB 
+    # 1. SETUP MLFLOW (MODE CI/CD NON-INTERACTIVE)
     # ==========================================
-    REPO_OWNER = "rfahur11"
-    REPO_NAME = "Telco-Churn-MLOps"
-    dagshub.init(repo_owner=REPO_OWNER, repo_name=REPO_NAME, mlflow=True)
+    # Tidak menggunakan dagshub.init() agar tidak membuka browser.
+    # Kita arahkan langsung ke URL DagsHub Anda.
+    
+    mlflow.set_tracking_uri("https://dagshub.com/rfahur11/Telco-Churn-MLOps.mlflow")
     mlflow.set_experiment("Telco_Churn_Experiment")
 
     # ==========================================
@@ -33,20 +33,19 @@ def main():
     # Aktifkan Autolog sesuai permintaan reviewer
     mlflow.sklearn.autolog()
 
-    # Gunakan block start_run agar rapi di DagsHub
     with mlflow.start_run(run_name="CI_CD_Retraining"):
-        # Tambahkan max_depth agar parameternya sama dengan baseline Kriteria 2
+        # Parameter baseline
         rf = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)
         rf.fit(X_train, y_train)
 
-        # Direktori tempat model akan disimpan untuk Docker
+        # Direktori tempat model akan disimpan untuk dibungkus Docker
         model_path = "model_dir"
         
         # Hapus folder jika sebelumnya sudah ada agar tidak error
         if os.path.exists(model_path):
             shutil.rmtree(model_path)
             
-        #  UNTUK CI/CD 
+        # Simpan artefak model fisik
         mlflow.sklearn.save_model(rf, model_path)
         print(f"Model berhasil disimpan di folder: {model_path}")
 
